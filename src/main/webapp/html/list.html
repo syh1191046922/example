@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>网站后台管理</title>
+
+		<link rel="stylesheet" type="text/css" href="../css/layui.css" />
+		<link rel="stylesheet" type="text/css" href="../css/admin.css" />
+
+
+		<style>
+			.paging{
+				display: flex;
+				align-items: center;
+				position: absolute;
+				top: 92%;
+				left: 26%;
+				z-index: 20;
+			}
+			.paging div{
+				border: 1px solid rgb(211, 211, 211);
+				padding: 10px;
+				border-radius: 10px;
+				cursor: pointer;
+				margin: 0 10px;
+				font-size: 14px;
+			}
+			.paging div.disable{
+				color: #fff;
+				cursor: not-allowed;
+				background-color: rgb(211, 211, 211);
+			}
+			.paging div.active{
+				border: none;
+				background-color: rgb(78, 216, 250);
+				color: #fff;
+			}
+		</style>
+		<script src="../js/jquery-3.4.1.js"></script>
+		<script>
+           $(function () {
+               $.ajax({
+                   url:'mes',
+                   method:'get',
+				   data:"page="+1,
+                   dataType:'JSON',
+                   success:function(res){
+                       var indes = 0;
+                       $("#table").empty();
+                       $.each(res,function (i,e) {
+                           indes=i+1;
+							$("#table").append("<tr>\n" +
+                                "\t\t\t\t\t\t\t\t<td><input type=\"checkbox\" name=\"\" lay-skin=\"primary\" data-id=\"1\"></td>\n" +
+                                "\t\t\t\t\t\t\t\t<td class=\"hidden-xs\">"+indes+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td class=\"hidden-xs\">"+e.studentID+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.name+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.birth+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.classname+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>\n" +
+                                "\t\t\t\t\t\t\t\t\t<div class=\"layui-inline\">\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-normal  add-btn\" data-id=\"1\" data-url=\"menu-add2.html\"><i class=\"layui-icon\">&#xe654;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-normal  edit-btn\" data-id=\"1\" data-url=\"menu-add2.html\"><i class=\"layui-icon\">&#xe642;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-danger del-btn\" data-id=\"1\" data-url=\"del.html\"><i class=\"layui-icon\">&#xe640;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t</div>\n" +
+                                "\t\t\t\t\t\t\t\t</td>\n" +
+                                "\t\t\t\t\t\t\t</tr>")
+                       })
+                   }
+               })
+           })
+		</script>
+		<script>
+
+            /*点击弹出按钮*/
+            function popBox() {
+                var popBox = document.getElementById("popBox");
+                var popLayer = document.getElementById("popLayer");
+                popBox.style.display = "block";
+                popLayer.style.display = "block";
+            }
+
+            /*点击关闭按钮*/
+            function closeBox() {
+                var popBox = document.getElementById("popBox");
+                var popLayer = document.getElementById("popLayer");
+                popBox.style.display = "none";
+                popLayer.style.display = "none";
+            }
+
+
+            function Paging(options) {
+
+                let defaultValue = {
+                    total: 0,
+                    current: 1,
+                    firstText: '首页',
+                    prevText: '上一页',
+                    nextText: '下一页',
+                    lastText: '尾页',
+                    PageSize: 12,
+                    PageNum: 5,
+                    container: document.getElementsByClassName('paging')[0]
+                }
+
+                this.options = Object.assign({}, defaultValue, options);
+                this.show();
+                this.PageClick()
+            }
+
+            Paging.prototype.show = function () {
+                let disable = "";
+                let PageTotalNum = this.getPageTotalNum();
+                this.options.container.innerHTML = "";
+                if(this.options.current === 1){
+                    disable = 'disable'
+                }
+                this.createElement('first ' + disable, this.options.firstText);
+                this.createElement('prev ' + disable, this.options.prevText);
+
+                this.createNumElement();
+
+                disable = ""
+                if(this.options.current === PageTotalNum){
+                    disable = 'disable'
+                }
+                this.createElement('next ' + disable, this.options.nextText);
+                this.createElement('last ' + disable, this.options.lastText);
+
+                let span = document.createElement('span');
+                let i = `<i>${this.options.current}</i> /<i>${PageTotalNum}</i>`;
+                span.innerHTML = i;
+                this.options.container.appendChild(span)
+            }
+
+            Paging.prototype.createNumElement = function() {
+                let min = this.options.current - Math.floor(this.options.PageNum / 2);
+                if(min < 1) {
+                    min = 1;
+                }
+                let max = min + this.options.PageNum - 1;
+                let PageTotalNum = this.getPageTotalNum();
+                if (max > PageTotalNum){
+                    max = PageTotalNum;
+                }
+                let active = "";
+                for(let i = min; i <= max; i ++) {
+                    if(this.options.current === i) {
+                        active = 'active';
+                    }else{
+                        active = '';
+                    }
+                    this.createElement('pagingDiv ' + active, i);
+                }
+            }
+            Paging.prototype.createElement = function(specialStyle, content) {
+                let oDiv = document.createElement('div');
+                oDiv.className = specialStyle;
+                oDiv.innerText = content;
+                this.options.container.appendChild(oDiv);
+            }
+
+            Paging.prototype.getPageTotalNum = function() {
+                var pageCount = 0;
+                $.ajax({
+					url: "getCount",
+                    async:false,
+					success:function (res) {
+                        pageCount = parseInt(res);
+                    }
+				});
+				return pageCount;
+
+            };
+
+            Paging.prototype.PageClick = function() {
+                let _this = this;
+                let PageTotalNum = this.getPageTotalNum();
+                this.options.container.addEventListener('click', function(e) {
+                    if(e.target.classList.contains('first')){
+                        updatePage(1);
+                        _this.toPage(1);
+                    } else if (e.target.classList.contains('prev')) {
+                        updatePage(_this.options.current - 1);
+                        _this.toPage(_this.options.current - 1);
+                    } else if (e.target.classList.contains('next')) {
+                        updatePage(_this.options.current + 1);
+                        _this.toPage(_this.options.current + 1);
+                    } else if (e.target.classList.contains('last')) {
+                        updatePage(PageTotalNum);
+                        _this.toPage(PageTotalNum);
+                    } else if(e.target.classList.contains('pagingDiv')){
+                        updatePage(+e.target.innerText);
+                        _this.toPage(+e.target.innerText);
+                    }
+                })
+            }
+            Paging.prototype.toPage = function (page){
+
+                let PageTotalNum = this.getPageTotalNum();
+                if(page < 1) {
+                    page = 1;
+                }
+                if(page > PageTotalNum){
+                    page = PageTotalNum;
+                }
+                this.options.current = page;
+                this.show()
+            }
+
+		</script>
+		<script>
+            function updatePage(index) {
+                $.ajax({
+                    url:'mes',
+                    method:'get',
+                    data:"page="+index,
+                    dataType:'JSON',
+                    success:function(res){
+                        var indes = 1;
+                        var ii = 1;
+                        if (index>1){
+                            ii = (index-1)*12+1
+						}
+                        $("#table").empty();
+                        $.each(res,function (i,e) {
+                            indes=i+ii;
+                            $("#table").append("<tr>\n" +
+                                "\t\t\t\t\t\t\t\t<td><input type=\"checkbox\" name=\"\" lay-skin=\"primary\" data-id=\"1\"></td>\n" +
+                                "\t\t\t\t\t\t\t\t<td class=\"hidden-xs\">"+indes+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td class=\"hidden-xs\">"+e.studentID+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.name+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.birth+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>"+e.classname+"</td>\n" +
+                                "\t\t\t\t\t\t\t\t<td>\n" +
+                                "\t\t\t\t\t\t\t\t\t<div class=\"layui-inline\">\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-normal  add-btn\" data-id=\"1\" data-url=\"menu-add2.html\"><i class=\"layui-icon\">&#xe654;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-normal  edit-btn\" data-id=\"1\" data-url=\"menu-add2.html\"><i class=\"layui-icon\">&#xe642;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t\t<button class=\"layui-btn layui-btn-mini layui-btn-danger del-btn\" data-id=\"1\" data-url=\"del.html\"><i class=\"layui-icon\">&#xe640;</i></button>\n" +
+                                "\t\t\t\t\t\t\t\t\t</div>\n" +
+                                "\t\t\t\t\t\t\t\t</td>\n" +
+                                "\t\t\t\t\t\t\t</tr>")
+                        })
+                    }
+                })
+            }
+		</script>
+	</head>
+	<body>
+		<div class="page-content-wrap">
+				<!--form class="layui-form" action="">-->
+					<div class="layui-form-item">
+						<div class="layui-inline tool-btn">
+							<button type="button" style="width:30px;border: none" onclick="popBox()"><img src="../img/add.png" width="100%"></button>
+						</div>
+						<div class="layui-inline">
+							<input type="text" name="title" placeholder="请输入标题" autocomplete="off" class="layui-input">
+						</div>
+						<button class="layui-btn layui-btn-normal" lay-submit="search">搜索</button>
+					</div>
+				<!--</form>-->
+				<div class="layui-form" id="table-list">
+					<table class="layui-table" lay-even lay-skin="nob">
+						<colgroup>
+							<col width="10">
+							<col width="50">
+							<col width="50">
+							<col width="50">
+							<col width="50">
+							<col width="50">
+							<col width="50">
+						</colgroup>
+						<thead>
+							<tr>
+								<th><input type="checkbox" name="" lay-skin="primary" data-id="1" ></th>
+								<th class="hidden-xs">序号</th>
+								<th class="hidden-xs">学号</th>
+								<th class="hidden-xs">姓名</th>
+								<th class="hidden-xs">生日</th>
+								<th class="hidden-xs">班级</th>
+								<th class="hidden-xs">操作</th>
+							</tr>
+						</thead>
+						<tbody id="table">
+							<tr>
+								<td><input type="checkbox" name="" lay-skin="primary" data-id="1"></td>
+								<td class="hidden-xs">1</td>
+								<td class="hidden-xs">1800500926</td>
+								<td>谭熙</td>
+								<td>2020-10-10</td>
+								<td>18005801</td>
+								<td>
+									<div class="layui-inline">
+										<button class="layui-btn layui-btn-mini layui-btn-normal  add-btn" data-id="1" data-url="menu-add2.html"><i class="layui-icon">&#xe654;</i></button>
+										<button class="layui-btn layui-btn-mini layui-btn-normal  edit-btn" data-id="1" data-url="menu-add2.html"><i class="layui-icon">&#xe642;</i></button>
+										<button class="layui-btn layui-btn-mini layui-btn-danger del-btn" data-id="1" data-url="del.html"><i class="layui-icon">&#xe640;</i></button>
+									</div>
+								</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+
+		</div>
+		<div id="popLayer"></div>
+		<div id="popBox">
+			<div class="close">
+
+				<a href="javascript:void(0)" onclick="closeBox()"><img src="../img/close.png" width="8%"></a>
+			</div>
+			<div class="content"><div class="wrap-container">
+				<form class="layui-form" style="width: 90%;padding-top: 20px; " action="/example/html/add" method="get">
+
+					<div class="layui-form-item">
+						<label class="layui-form-label">学号：</label>
+						<div class="layui-input-block">
+							<input type="text" name="studentID" required lay-verify="required" placeholder="请输入学号如“1800500926”" autocomplete="off" class="layui-input">
+						</div>
+
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">姓名：</label>
+						<div class="layui-input-block">
+							<input type="text" name="name" required lay-verify="required" placeholder="请输入姓名" autocomplete="off" class="layui-input">
+						</div>
+
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">出生日期：</label>
+						<div class="layui-input-block">
+							<input type="text" name="birth" required lay-verify="required" placeholder="请输入出生日期如“2000-02-22”" autocomplete="off" class="layui-input">
+						</div>
+
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">班级：</label>
+						<div class="layui-input-block">
+							<input type="text" name="classname" required lay-verify="required" placeholder="请输入班级如“18005801”" autocomplete="off" class="layui-input">
+						</div>
+
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-input-block">
+							<button class="layui-btn layui-btn-normal"  type="submit">立即提交</button>
+							<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+						</div>
+					</div>
+				</form>
+			</div></div>
+		</div>
+		<!--<script src="../js/layui.js" type="text/javascript" charset="utf-8"></script>-->
+		<!--<script src="../js/common.js" type="text/javascript" charset="utf-8"></script>-->
+		<div class="paging"></div>
+		<!--<script src="../js/paging.js"></script>-->
+		<script>
+            let paging = new Paging({
+                total: 100,
+            })
+		</script>
+	</body>
+</html>
